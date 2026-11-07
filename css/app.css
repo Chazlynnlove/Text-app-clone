@@ -1,5 +1,24 @@
 :root {
-  --disabled-opacity: 0.38;
+  --dark-accent-color: rgb(255, 255, 255, 0.12);
+  --dark-background-color: #1f1f1f;
+  --dark-divider-color: var(--dark-accent-color);
+  --dark-highlight-color: rgb(26, 115, 232, 0.26);
+  /* These colors are copied from codemirror to maintain consistency. */
+  --light-theme-line-number-color: #999999;
+  --dark-theme-line-number-color: #d0d0d0;
+  --light-theme-text-color: #000000;
+  --dark-theme-text-color: #f8f8f2;
+  /*
+   * editor styles are mostly copied from codemirror so that the text area
+   * maintains the same look.
+   */
+  --editor-gutter-horiztonal-padding: 8px;
+  --editor-gutter-min-size: 29px;
+  --editor-gutter-padding: 4px 3px 16px 5px;
+  --editor-gutter-vertical-padding: 20px;
+  --editor-line-height: 1.2em;
+  --editor-padding: 4px 4px 16px 4px;
+  --editor-vertical-padding: 20px;
   --header-height: 48px;
   --mdc-theme-secondary: #1b72e8;
   --settings-input-width: 55px;
@@ -628,6 +647,83 @@ header.hide-controls #window-close {
   position: relative;
 }
 
+/* These are the styles for the accessibility mode editor */
+.editor-textarea-container {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  overflow-x: hidden;
+}
+
+#editor-textarea-line-numbers {
+  background: var(--light-background-color);
+  min-height: calc(100% - 2*var(--editor-gutter-vertical-padding));
+  height: auto;
+  padding: var(--editor-gutter-padding);
+  min-width: calc(var(--editor-gutter-min-size) -
+    var(--editor-gutter-horiztonal-padding));
+  width: auto;
+  font-family: monospace;
+  font-size: 14px;
+  border-right: 1px solid #ddd;
+  color: var(--light-theme-line-number-color);
+  display: flex;
+  flex-direction: column;
+}
+
+.editor-textarea-container.dark-theme #editor-textarea-line-numbers {
+  background: var(--dark-background-color);
+  color: var(--dark-theme-line-number-color);
+  border-right: none;
+}
+
+#editor-textarea-line-numbers>div {
+  width: 100%;
+  text-align: right;
+  height: auto;
+  line-height: var(--editor-line-height);
+}
+
+.editor-textarea-wrapper {
+  color: var(--light-theme-text-color);
+  min-height: calc(100% - (2 * var(--editor-vertical-padding)));
+  height: auto;
+  padding: var(--editor-padding);
+  flex: 1;
+  overflow-y: hidden;
+  overflow-x: auto;
+}
+
+#editor-textarea {
+  border: none;
+  background: none;
+  color: inherit;
+  height: 100%;
+  margin: 0;
+  width: 100%;
+  padding: 0;
+  resize: none;
+  font-family: monospace;
+  line-height: var(--editor-line-height);
+  font-size: 14px;
+  overflow: hidden;
+}
+
+#editor-textarea:focus, #editor-textarea:hover {
+  outline: none;
+}
+
+
+.editor-textarea-container.dark-theme .editor-textarea-wrapper {
+  background: var(--dark-background-color);
+  color: var(--dark-theme-text-color);
+}
+
+#ed
+itor-textarea:focus {
+  outline: none;
+}
+
 /* Markup below overrides default search input box styling. */
 input[type=search] {
   -webkit-appearance:none;
@@ -717,10 +813,26 @@ input[type=search]:focus {
   outline: none;
 }
 
-#editor .cm-editor .cm-search {
-  display: none;
+.CodeMirror-lines {
+  line-height: var(--editor-line-height);
 }
 
 header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   background-color: rgba(253, 207, 76, .5);
+}
+
+.hidden-textarea-mirror {
+  position: absolute;
+  visibility: hidden;
+  font-family: monospace;
+  line-height: var(--editor-line-height);
+  white-space: nowrap;
+}
+
+.hidden-line-mirror {
+  position: absolute;
+  visibility: hidden;
+  font-family: monospace;
+  line-height: var(--editor-line-height);
+  word-break: break-all;
 }

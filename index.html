@@ -140,8 +140,20 @@
                 </div>
               </div>
             </li>
-            <div class="group" role="radiogroup" aria-labelledby="setting-theme-heading">
-              <h2 id="setting-theme-heading" i18n-content="themeSetting"></h2>
+            <li>
+              <label for="setting-accessibilitymode" i18n-content="accessibilityModeSetting"></label>
+              <div class="mdc-switch" id="setting-accessibilitymode-switch">
+                <div class="mdc-switch__track"></div>
+                <div class="mdc-switch__thumb-underlay">
+                  <div class="mdc-switch__thumb">
+                    <input type="checkbox" id="setting-accessibilitymode"
+                        class="mdc-switch__native-control" role="switch">
+                  </div>
+                </div>
+              </div>
+            </li>
+            <div class="group">
+              <h2 i18n-content="themeSetting"></h2>
               <div class="mdc-form-field">
                 <label for="setting-theme-default" i18n-content="DeviceThemeOption"></label>
                 <div class="mdc-radio">
@@ -248,6 +260,7 @@
   <!-- Everything in this JS block will be replaced with a single .js file include at compilation -->
   <script src="js/app.js" type="text/javascript"></script>
   <script src="js/editor-cm.js" type="text/javascript"></script>
+  <script src="js/editor-ta.js" type="text/javascript"></script>
   <script src="js/i18n-template.js" type="text/javascript"></script>
   <script src="js/search.js" type="text/javascript"></script>
   <script src="js/settings.js" type="text/javascript"></script>

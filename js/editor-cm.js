@@ -1,24 +1,20 @@
-'use strict';
+var EditSession = CodeMirror.Doc;
 
-/**
- * @constructor
- * @param {DOM} elementId
- * @param {Settings} settings
- */
-function EditorCodeMirror(editorElement, settings) {
-  const CodeMirror = window.CodeMirror;
-  this.element_ = editorElement;
-  this.settings_ = settings;
+// The devToolsAccessibleTextArea class was taken from chrome dev tools to help
+// improve codemirror screen reader support for navigating around a document.
+// https://github.com/ChromeDevTools/devtools-frontend/blob/0ddf8e4898701ab4174096707346d71cc5985268/front_end/text_editor/CodeMirrorTextEditor.js#L1736
 
-  /** @type {window.CodeMirror.state.Compartment} for enabling/disabling the editor. */
-  this.editableCompartment_ = new CodeMirror.state.Compartment();
-
-  /** @type {window.CodeMirror.state.Compartment} for changing tab size dynamically. */
-  this.tabSizeCompartment_ = new CodeMirror.state.Compartment();
-
-  /** @type {window.CodeMirror.state.Compartment} for changing indent unit dynamically. */
-  this.indentUnitCompartment_ = new CodeMirror.state.Compartment();
-
+// CodeMirror uses an offscreen <textarea> to detect input. Due to
+// inconsistencies in the many browsers it supports, it simplifies things by
+// regularly checking if something is in the textarea, adding those characters
+// to the document, and then clearing the textarea. This breaks assistive
+// technology that wants to read from CodeMirror, because the <textarea> that
+// they interact with is constantly empty. Because we target chrome on
+// chrome os, we can gaurantee consistent input events. This lets us leave the
+// current line from the editor in our <textarea>.
+// CodeMirror still expects a mostly empty <textarea>, so we pass CodeMirror a
+// fake <textarea> that only contains the users input.
+CodeMirror.inputStyles.devToolsAccessibleTextArea = class extends CodeMirror.inputStyles.textarea {
   /**
    * @type {window.CodeMirror.state.Compartment} for changing the language
    * dynamically to match the file extension.
@@ -94,7 +90,42 @@ function EditorCodeMirror(editorElement, settings) {
     parent: editorElement,
   })
 
-  this.search_ = new Search(this.editorView_);
+/**
+ * @constructor
+ * @param {DOM} elementId
+ * @param {Settings} settings
+ */
+function EditorCodeMirror(editorElement, settings) {
+  this.element_ = editorElement;
+  this.settings_ = settings;
+  this.currentSession_ = null;
+  this.cm_ = CodeMirror(
+      editorElement,
+      {
+        'value': '',
+        'autofocus': true,
+        'matchBrackets': true,
+        'inputStyle': 'devToolsAccessibleTextArea',
+        // this is 25 days in milliseconds, we set the poll interval to be
+        // incredibly long so that a poll doesn't break our selection logic.
+        // We can remove the need for the poll because we only target chrome on
+        // chrome os which handles events consistently, the poll is for other
+        // browsers with less reliable input events, which we can ignore here.
+        'pollInterval': Math.pow(2, 31) - 1,
+        'highlightSelectionMatches': {
+          minChars: 1,
+          delay: 0,
+          caseInsensitive: true
+        }
+      });
+  this.cm_.setSize(null, 'auto');
+  this.cm_.on('change', this.onChange.bind(this));
+  this.textarea_ = this.cm_.getInputField();
+  this.prevInput_ = null;
+  this.setTheme();
+  this.search_ = new Search(this.cm_);
+  // Mimic Sublime behaviour there.
+  this.defaultTabHandler_ = CodeMirror.commands.defaultTab;
 }
 
 EditorCodeMirror.EXTENSION_TO_MODE = {
@@ -144,148 +175,16 @@ EditorCodeMirror.EXTENSION_TO_MODE = {
     'xml': 'xml',
     'yaml': 'yaml'};
 
-{
-  const t = window.CodeMirror.highlight.tags;
-  EditorCodeMirror.HIGHLIGHT_STYLE = window.CodeMirror.language.HighlightStyle.define([
-    {tag: t.variableName, color: 'var(--ta-token-variable-color)'},
-    {tag: t.definition(t.variableName), color: 'var(--ta-token-definition-color)'},
-    {tag: t.propertyName, color: 'var(--ta-token-property-color)'},
-    {tag: [t.typeName, t.className, t.namespace, t.macroName], color: 'var(--ta-token-type-color)'},
-    {tag: [t.special(t.name), t.constant(t.className)], color: 'var(--ta-token-variable-special-color)'},
-    {tag: t.standard(t.variableName), color: 'var(--ta-token-builtin-color)'},
-    {tag: [t.number, t.literal, t.unit], color: 'var(--ta-token-number-color)'},
-    {tag: t.string, color: 'var(--ta-token-string-color)'},
-    {tag: [t.special(t.string), t.regexp, t.escape], color: 'var(--ta-token-string-special-color)'},
-    {tag: [t.atom, t.unit, t.labelName, t.bool], color: 'var(--ta-token-atom-color)'},
-    {tag: t.keyword, color: 'var(--ta-token-keyword-color)'},
-    {tag: [t.comment, t.quote], color: 'var(--ta-token-comment-color)'},
-    {tag: t.invalid, backgroundColor: 'var(--ta-token-invalid-background-color)', color: 'var(--ta-token-invalid-color) !important'},
-    {tag: t.meta, color: 'var(--ta-token-meta-color)'},
-    {tag: t.tagName, color: 'var(--ta-token-tag-color)'},
-    {tag: t.attributeName, color: 'var(--ta-token-attribute-color)'},
-    {tag: t.attributeValue, color: 'var(--ta-token-attribute-value-color)'},
-    {tag: t.heading, color: 'var(--ta-token-heading-color)'},
-    {tag: t.quote, color: 'var(--ta-token-quote-color)'},
-    {tag: t.link, color: 'var(--ta-token-link-color)'},
-    {tag: t.url, color: 'var(--ta-token-url-color)'},
-    {tag: t.inserted, color: 'var(--ta-token-inserted-color)'},
-    {tag: t.deleted, color: 'var(--ta-token-deleted-color)'},
-    {tag: t.contentSeparator, color: 'var(--ta-token-content-separator-color)'},
-    {tag: t.strong, fontWeight: 'bold'},
-    {tag: t.emphasis, fontStyle: 'italic'},
-  ]);
-}
-
-EditorCodeMirror.prototype.newState = function(opt_content) {
-  const CodeMirror = window.CodeMirror;
-  return CodeMirror.state.EditorState.create({
-    doc: opt_content || '',
-    extensions: [
-      CodeMirror.commands.history({
-        minDepth: 10000,
-      }),
-      CodeMirror.view.drawSelection(),
-      CodeMirror.view.dropCursor(),
-      CodeMirror.language.bracketMatching(),
-      this.langCompartment_.of(CodeMirror.lang.javascript()),
-      this.lineNumbersCompartment_.of(CodeMirror.view.lineNumbers()),
-      CodeMirror.view.keymap.of([
-        {
-          key: 'Enter',
-          run: ({ state, dispatch }) => {
-            if (this.settings_.get('smartindent')) {
-              return window.CodeMirror.commands.insertNewlineAndIndent({state, dispatch});
-            }
-            // This copies CodeMirror's insertNewlineAndIndent but with some differences:
-            // It doesn't check for matching brackets or an indent context.
-            // So it just indents the new line the same as the the line before, which
-            // matches CM5's behavior when `smartIndent` is false.
-            if (state.readOnly) return false;
-            const changes = state.changeByRange(range => {
-              let { from, to } = range, line = state.doc.lineAt(from);
-              const indent = window.CodeMirror.state.countColumn(/^\s*/.exec(
-                state.doc.lineAt(from).text)[0], state.tabSize);
-
-              while (to < line.to && /\s/.test(line.text[to - line.from])) to++;
-              if (from > line.from && from < line.from + 100 && !/\S/.test(line.text.slice(0, from))) {
-                from = line.from;
-              }
-              const insert = ["", window.CodeMirror.language.indentString(state, indent)];
-              return {
-                changes: { from, to, insert: window.CodeMirror.state.Text.of(insert) },
-                range: window.CodeMirror.state.EditorSelection.cursor(from + 1 + insert[1].length)
-              }
-            });
-            dispatch(state.update(changes, { scrollIntoView: true, userEvent: "input" }));
-            return true;
-          },
-        },
-        ...CodeMirror.commands.defaultKeymap,
-        ...CodeMirror.commands.historyKeymap,
-        {
-          key: 'Tab',
-          preventDefault: true,
-          run: ({state, dispatch}) => {
-            // Get the setting value again because it might have changed.
-            const useSpace = this.settings_.get('spacestab');
-
-            // If the indent unit is tab, use the built-in insertTab function.
-            if (!useSpace) {
-              return window.CodeMirror.commands.insertTab({state, dispatch});
-            }
-            // If something is selected, use the built-in indentMore function.
-            // It automatically handles spaces vs tabs.
-            if (state.selection.ranges.some(r => !r.empty)) {
-              return window.CodeMirror.commands.indentMore({state, dispatch});
-            }
-
-            const indentContext = new window.CodeMirror.language.IndentContext(state);
-            const cursorColumn = indentContext.column(state.selection.main.head);
-
-            // Insert the number of spaces equivalent to a tab.
-            const tabSize = indentContext.unit;
-            const numSpaces = tabSize - cursorColumn % tabSize;
-            dispatch(state.update(state.replaceSelection(' '.repeat(numSpaces)),
-                {scrollIntoView: true, userEvent: "input"}));
-            return true;
-          },
-        },
-        {
-          key: 'Shift-Tab',
-          preventDefault: true,
-          run: CodeMirror.commands.indentSelection,
-        },
-        {
-          key: 'Ctrl-d',
-          run: CodeMirror.commands.deleteLine,
-        },
-      ]),
-      this.editableCompartment_.of(CodeMirror.view.EditorView.editable.of(true)),
-      this.tabSizeCompartment_.of(CodeMirror.state.EditorState.tabSize.of(2)),
-      this.indentUnitCompartment_.of(window.CodeMirror.language.indentUnit.of('  ')),
-      this.lineWrappingCompartment_.of(CodeMirror.view.EditorView.lineWrapping),
-      CodeMirror.view.EditorView.updateListener.of(this.onViewUpdate.bind(this)),
-      CodeMirror.search.search({
-        literal: true,
-      }),
-      this.themeCompartment_.of(this.lightTheme_),
-      CodeMirror.language.syntaxHighlighting(EditorCodeMirror.HIGHLIGHT_STYLE),
-    ],
-  });
-};
-
 /**
+ * @param {SessionDescriptor} session
  * Change the current session, usually to switch to another tab.
  *
  * @param {EditorState} editorState
  * @param {string} fileExtension
  */
-EditorCodeMirror.prototype.setSession = function(editorState, fileExtension) {
-  this.editorView_.setState(editorState);
-  // Apply all settings because settings only apply to the current state but we
-  // want the settings to affect all the tabs.
-  this.applyAllSettings();
-  this.updateMode(fileExtension);
+EditorCodeMirror.prototype.setSession = function(session) {
+  this.cm_.swapDoc(session.codemirror);
+  this.currentSession_ = session;
 };
 
 /**
@@ -296,18 +195,32 @@ EditorCodeMirror.prototype.getSearch = function() {
   return this.search_;
 };
 
+EditorCodeMirror.prototype.onChange = function() {
+  $.event.trigger('docchange', {
+    type: 'codemirror',
+    session: this.currentSession_
+  });
+};
+
+EditorCodeMirror.prototype.undo = function() {
+  this.cm_.undo();
+};
+
+EditorCodeMirror.prototype.redo = function() {
+  this.cm_.redo();
+};
+
 EditorCodeMirror.prototype.focus = function() {
   this.editorView_.focus();
 };
 
 /**
- * Updates the EditorView's mode to match the file extension.
- *
- * @param {string} fileExtension
+ * @param {SessionDescriptor} session
+ * @param {string} extension
  */
-EditorCodeMirror.prototype.updateMode = function(fileExtension) {
-  let extension;
-  const mode = EditorCodeMirror.EXTENSION_TO_MODE[fileExtension];
+EditorCodeMirror.prototype.setMode = function(session, extension) {
+  session = session.codemirror;
+  var mode = EditorCodeMirror.EXTENSION_TO_MODE[extension];
   if (mode) {
     const lang = window.CodeMirror.lang[mode];
 
@@ -432,4 +345,14 @@ EditorCodeMirror.prototype.enable = function() {
   this.editorView_.dispatch({
     effects: this.editableCompartment_.reconfigure(window.CodeMirror.view.EditorView.editable.of(true))
   });
+};
+
+/**
+ * Prepare the Editor to be killed and removed from the DOM
+ */
+EditorCodeMirror.prototype.destory = function() {
+  // By swapping out the doc for a empty one, codemirror detaches the current
+  // doc so when the codemirror instance is deleted our document does not enter
+  // a corrupted state where it still thinks it's attached to the edior.
+  this.cm_.swapDoc(new CodeMirror.Doc(''));
 };

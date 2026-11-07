@@ -66,6 +66,13 @@
   "deviceThemeOption": {
     "message": "Use device theme",
     "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
+  "accessibilityModeSetting": {
+    "message": "Accessibility Mode",
+    "description": "The label for the checkbox in settings tab that activates accessibility mode, this mode allows for screenreaders to function correctly but disables syntax highlighting"
+  },
+  "defaultThemeOption": {
+    "message": "Default",
+    "description":"The text of the default Option Theme."
   },
   "lightThemeOption": {
     "message": "Light",
