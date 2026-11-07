@@ -21,6 +21,7 @@ function WindowController(editor, settings, tabs) {
   $(document).bind('tabpathchange', this.onTabPathChange.bind(this));
   $(document).bind('tabrenamed', this.onChangeTab_.bind(this));
   $(document).bind('tabsave', this.onTabChange_.bind(this));
+  this.initUI_();
 
   this.initUI_();
 }
@@ -59,6 +60,10 @@ WindowController.prototype.initUI_ = function() {
     $(document).bind('settingsready', this.initSidebar_.bind(this));
   }
 };
+
+WindowController.prototype.initUI_ = function() {
+
+}
 
 WindowController.prototype.initSidebar_ = function() {
   // FIXME: move this to CSS where possible (init code)
