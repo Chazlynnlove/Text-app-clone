@@ -23,6 +23,10 @@
     "message": "Настройки",
     "description": "The text of the Menu 'Settings'."
   },
+  "menuShortcuts": {
+    "message": "Быстрые клавиши",
+    "description": "The text on a button that takes the user to a Help center article showing all the Keyboard shortcuts for the app."
+  },
   "fontsizeSetting": {
     "message": "Размер шрифта",
     "description": "The text of the settings 'Font size'."
@@ -55,21 +59,13 @@
     "message": "Темы",
     "description": "The text of the theme setting."
   },
-  "analyticsSetting": {
-    "message": "Отправлять статистику",
-    "description": "The label for the checkbox in settings tab that turns on Analytics."
-  },
-  "analyticsTooltip": {
-    "message": "Автоматически отправлять статистику использования",
-    "description": "The tooltip for send statistics checkbox."
-  },
   "alwaysOnTopSetting": {
     "message": "Показывать поверх других окон",
     "description": "The label for the checkbox in settings tab that sets the window always on top."
   },
-  "defaultThemeOption": {
-    "message": "По умолчанию",
-    "description": "The text of the default Option Theme."
+  "deviceThemeOption": {
+    "message": "Как на устройстве",
+    "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
   },
   "lightThemeOption": {
     "message": "Светлая",
@@ -78,6 +74,10 @@
   "darkThemeOption": {
     "message": "Тёмная",
     "description": "The text of the dark Option Theme."
+  },
+  "helpSection": {
+    "message": "Справка",
+    "description": "Title for a section with useful links to help articles."
   },
   "closeSettings": {
     "message": "Назад",

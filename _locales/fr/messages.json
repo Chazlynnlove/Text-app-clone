@@ -23,6 +23,10 @@
     "message": "Paramètres",
     "description": "The text of the Menu 'Settings'."
   },
+  "menuShortcuts": {
+    "message": "Raccourcis clavier",
+    "description": "The text on a button that takes the user to a Help center article showing all the Keyboard shortcuts for the app."
+  },
   "fontsizeSetting": {
     "message": "Taille de police",
     "description": "The text of the settings 'Font size'."
@@ -55,21 +59,13 @@
     "message": "Thèmes",
     "description": "The text of the theme setting."
   },
-  "analyticsSetting": {
-    "message": "Envoyer les statistiques",
-    "description": "The label for the checkbox in settings tab that turns on Analytics."
-  },
-  "analyticsTooltip": {
-    "message": "Envoyer automatiquement les statistiques d'utilisation",
-    "description": "The tooltip for send statistics checkbox."
-  },
   "alwaysOnTopSetting": {
     "message": "Toujours au premier plan",
     "description": "The label for the checkbox in settings tab that sets the window always on top."
   },
-  "defaultThemeOption": {
-    "message": "Par défaut",
-    "description": "The text of the default Option Theme."
+  "deviceThemeOption": {
+    "message": "Utiliser le thème de l'appareil",
+    "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
   },
   "lightThemeOption": {
     "message": "Clair",
@@ -78,6 +74,10 @@
   "darkThemeOption": {
     "message": "Foncé",
     "description": "The text of the dark Option Theme."
+  },
+  "helpSection": {
+    "message": "Aide",
+    "description": "Title for a section with useful links to help articles."
   },
   "closeSettings": {
     "message": "Retour",

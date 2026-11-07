@@ -20,13 +20,105 @@
   --editor-padding: 4px 4px 16px 4px;
   --editor-vertical-padding: 20px;
   --header-height: 48px;
-  --light-accent-color: rgb(0, 0, 0, 0.04);
-  --light-background-color: white;
-  --light-divider-color: var(--light-accent-color);
-  --light-highlight-color: rgb(26, 115, 232, 0.18);
-  --mdc-theme-secondary: rgb(27, 114, 232);
+  --mdc-theme-secondary: #1b72e8;
   --settings-input-width: 55px;
   --tab-height: 36px;
+}
+
+body[theme="light"] {
+  --ta-accent-color: rgb(0, 0, 0, 0.04);
+  --ta-divider-color: var(--ta-accent-color);
+  --ta-highlight-color: rgb(26, 115, 232, 0.18);
+  --ta-background-color: white;
+
+  --ta-mdc-icon-background-color: black;
+  --ta-mdc-icon-color: var(--ta-ui-text-color);
+  --ta-mdc-switch-off-thumb-color: #ececec;
+
+  --ta-ui-text-color: black;
+  --ta-ui-highlight-text-color: black;
+  --ta-search-border-color: #e8eaed;
+  --ta-search-button-divider-color: #dddddd;
+  --ta-filename-text-color: #5f6368;
+
+  --ta-editor-text-color: black;
+  --ta-editor-line-number-text-color: #5f6368;
+  --ta-editor-selection-color: #d9d9d9;
+  --ta-editor-selection-focus-color: #d7d4f0;
+
+  --ta-token-variable-color: black;
+  --ta-token-definition-color: #00f;
+  --ta-token-property-color: black;
+  --ta-token-type-color: #219;
+  --ta-token-builtin-color: #30a;
+  --ta-token-variable-special-color: #00c;
+  --ta-token-number-color: #164;
+  --ta-token-string-color: #a11;
+  --ta-token-string-special-color: #f50;
+  --ta-token-atom-color: #219;
+  --ta-token-keyword-color: #708;
+  --ta-token-comment-color: #a50;
+  --ta-token-invalid-background-color: inherit;
+  --ta-token-invalid-color: #f00;
+  --ta-token-meta-color: #555;
+  --ta-token-tag-color: #170;
+  --ta-token-attribute-color: #00c;
+  --ta-token-attribute-value-color: var(--ta-token-string-color);
+  --ta-token-heading-color: blue;
+  --ta-token-quote-color: #090;
+  --ta-token-link-color: #00c;
+  --ta-token-url-color: var(--ta-token-string-color);
+  --ta-token-inserted-color: #292;
+  --ta-token-deleted-color: #d44;
+  --ta-token-content-separator-color: #666;
+}
+
+body[theme="dark"] {
+  --ta-accent-color: rgb(255, 255, 255, 0.12);
+  --ta-divider-color: var(--ta-accent-color);
+  --ta-highlight-color: rgb(26, 115, 232, 0.26);
+  --ta-background-color: #1f1f1f;
+
+  --ta-mdc-icon-background-color: white;
+  --ta-mdc-icon-color: var(--ta-ui-text-color);
+  --ta-mdc-switch-off-thumb-color: #b9b9b9;
+
+  --ta-ui-text-color: #ebebeb;
+  --ta-ui-highlight-text-color: white;
+  --ta-search-border-color: var(--ta-divider-color);
+  --ta-search-button-divider-color: var(--ta-search-border-color);
+  --ta-filename-text-color: #bdc1c6;
+
+  --ta-editor-text-color: #f8f8f2;
+  --ta-editor-line-number-text-color: #bdc1c6;
+  --ta-editor-selection-color: #49483e;
+  --ta-editor-selection-focus-color: var(--ta-editor-selection-color);
+
+  --ta-token-variable-color: #a6e22e;
+  --ta-token-definition-color: #fd971f;
+  --ta-token-property-color: #a6e22e;
+  --ta-token-type-color: #ae81ff;
+  --ta-token-variable-special-color: #9effff;
+  --ta-token-builtin-color: #9fb4d6;
+  --ta-token-number-color: #ae81ff;
+  --ta-token-string-color: #e6db74;
+  --ta-token-string-special-color: #e6db74;
+  --ta-token-atom-color: #ae81ff;
+  --ta-token-keyword-color: #f92672;
+  --ta-token-comment-color: #75715e;
+  --ta-token-invalid-background-color: #f92672;
+  --ta-token-invalid-color: #f8f8f0;
+  --ta-token-meta-color: #8f8f8f;
+  --ta-token-tag-color: #f92672;
+  --ta-token-attribute-color: #a6e22e;
+  --ta-token-attribute-value-color: var(--ta-token-string-color);
+  --ta-token-heading-color: var(--ta-token-string-color);
+  --ta-token-quote-color: #f92672;
+  --ta-token-link-color: #ae81ff;
+  --ta-token-url-color: var(--ta-token-string-color);
+  --ta-token-inserted-color: #292;
+  --ta-token-deleted-color: #d44;
+  --ta-token-content-separator-color: #888;
 }
 
 * {
@@ -61,9 +153,9 @@ img {
 }
 
 #sidebar {
-  background-color: var(--dark-background-color);
-  border-right: 2px solid var(--light-divider-color);
-  color: #EBEBEB;
+  background-color: var(--ta-background-color);
+  border-right: 2px solid var(--ta-divider-color);
+  color: var(--ta-ui-text-color);
   cursor: default;
   display: flex;
   flex-direction: column;
@@ -99,13 +191,19 @@ img {
 }
 
 #sidebar h2 {
+  align-items: center;
+  display: flex;
   font: 500 13px "Roboto", sans-serif;
   letter-spacing: 1.2px;
+  margin: 4px 8px;
+  min-height: var(--tab-height);
+  padding: 0 16px;
   text-transform: uppercase;
+  white-space: nowrap;
 }
 
 #sidebar hr {
-  background-color: var(--dark-divider-color);
+  background-color: var(--ta-divider-color);
   border: none;
   height: 2px;
   margin: 0;
@@ -116,33 +214,34 @@ img {
   list-style-type: none;
 }
 
-#sidebar h2,
-#sidebar li,
-#sidebar .mdc-form-field {
-  align-items: center;
-  display: flex;
-  height: var(--tab-height);
-  margin: 4px 8px;
-  padding: 0 16px;
-  -webkit-user-select: none;
-  white-space: nowrap;
-}
-
-#sidebar li,
-#sidebar .mdc-form-field {
+#sidebar li {
   border-radius: 100px;
-  cursor: pointer;
+  margin: 4px 8px;
 }
 
-#sidebar li:hover,
-#sidebar .mdc-form-field:hover,
-#tabs-list li.active:hover {
-  background-color: var(--dark-highlight-color);
-  color: #fff;
+.sidebar-button {
+  align-items: center;
+  background-color: transparent;
+  border: none;
+  border-radius: 100px;
+  color: inherit;
+  cursor: pointer;
+  display: flex;
+  font: inherit;
+  margin: 0;
+  min-height: var(--tab-height);
+  padding: 0 16px;
+  text-align: start;
+  white-space: nowrap;
+  width: 100%;
+}
+
+.sidebar-button:focus-visible {
+  outline: 2px solid -webkit-focus-ring-color;
 }
 
 #sidebar input {
-  background-color: var(--dark-accent-color);
+  background-color: var(--ta-accent-color);
 }
 
 #sidebar .group {
@@ -184,39 +283,45 @@ img {
   align-items: center;
   display: flex;
   flex-direction: row;
+  position: relative;
 }
 
-#tabs-list li.active {
-  background-color: var(--dark-accent-color);
+#tabs-list li.active,
+#tabs-list li.active:hover {
+  background-color: var(--ta-accent-color);
 }
 
-#tabs-list li .filename {
+#tabs-list .filename {
   display: inline;
   flex: 1 1 auto;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-#tabs-list li.unsaved .filename:after {
+#tabs-list .filename.unsaved:after {
   content: " *";
 }
 
-#tabs-list li .close {
+#tabs-list li > .close {
   display: none;
   font-size: 20px;
-  height: 100%;
+  height: var(--tab-height);
   justify-content: center;
   min-width: var(--tab-height);
   padding: 0;
   width: var(--tab-height);
 }
 
-#tabs-list li:hover {
-  padding-right: 0;
+#tabs-list li:hover > .close {
+  align-items: center;
+  display: flex;
+  position: absolute;
+  right: 8px;
+  top: 0;
 }
 
-#tabs-list li:hover .close {
-  display: flex;
+#tabs-list li:hover > .filename {
+  padding-right: var(--tab-height);
 }
 
 #file-tabs-menu {
@@ -251,14 +356,30 @@ img {
 
 #settings-list li,
 #settings-list .mdc-form-field {
+  align-items: center;
   background-color: inherit;
+  border-radius: 100px;
+  cursor: pointer;
   -webkit-box-flex: 1.0;
   -webkit-box-orient: horizontal;
   -webkit-box-align: end;
   display: -webkit-flex;
-  padding-right: 0;
+  margin: 4px 8px;
+  min-height: var(--tab-height);
+  padding: 0;
   word-break: break-all;
   word-wrap: break-word;
+}
+
+#settings-list li:focus-within,
+#settings-list .mdc-form-field:focus-within {
+  outline: 2px solid -webkit-focus-ring-color;
+}
+
+#sidebar li:hover,
+#settings-list .mdc-form-field:hover {
+  background-color: var(--ta-highlight-color);
+  color: var(--ta-ui-highlight-text-color);
 }
 
 .mdc-form-field {
@@ -277,18 +398,34 @@ img {
   opacity: 0.3;
 }
 
+/* TODO: Use CSS variables for these radio controls. */
+
+body[theme="light"] .mdc-switch:not(.mdc-switch--checked) .mdc-switch__track {
+  background-color: black;
+  border-color: black;
+  opacity: 0.26;
+}
+
+body[theme="light"] .mdc-radio .mdc-radio__native-control:enabled:not(:checked)+.mdc-radio__background .mdc-radio__outer-circle {
+  border-color: black;
+  opacity: 0.54;
+}
+
+
 #settings-list label {
   align-items: center;
+  box-sizing: border-box;
   cursor: pointer;
   display: flex;
   flex: 1;
-  height: 100%;
   margin: 0;
   max-width: calc(100% - var(--settings-input-width));
+  min-height: var(--tab-height);
   overflow: hidden;
-  padding: 0;
+  padding: 4px 0 4px 16px;
   text-overflow: ellipsis;
-  white-space: nowrap;
+  word-break: break-word;
+  white-space: normal;
 }
 
 .settings-switch-ul {
@@ -299,8 +436,9 @@ img {
   -webkit-app-region: no-drag;
   border: 0px;
   border-radius: 100px;
+  color: var(--ta-ui-text-color);
   font-size: 14px;
-  height: 100%;
+  height: var(--tab-height);
   padding: 0;
   text-align: center;
   -webkit-user-select: auto;
@@ -312,7 +450,7 @@ img {
 }
 
 #settings-list input[type="text"]:focus {
-  background-color: var(--dark-highlight-color);
+  background-color: var(--ta-highlight-color);
   outline: none;
 }
 
@@ -326,7 +464,7 @@ img {
 }
 
 .mdc-switch:not(.mdc-switch--checked) .mdc-switch__thumb {
-  border-color: rgb(185, 185, 185);
+  border-color: var(--ta-mdc-switch-off-thumb-color);
 }
 
 .mdc-switch:not(.mdc-switch--checked) .mdc-switch__track {
@@ -345,8 +483,8 @@ img {
 header {
   align-items: center;
   -webkit-app-region: drag;
-  background-color: var(--light-background-color);
-  border-bottom: 2px solid var(--light-divider-color);
+  background-color: var(--ta-background-color);
+  border-bottom: 2px solid var(--ta-divider-color);
   display: flex;
   height: var(--header-height);
   padding-left: 10px;
@@ -355,7 +493,12 @@ header {
 }
 
 .mdc-icon-button {
+  color: var(--ta-ui-text-color);
   -webkit-app-region: no-drag;
+}
+
+.mdc-icon-button::before, .mdc-icon-button::after {
+  background-color: var(--ta-mdc-icon-background-color);
 }
 
 header .mdc-icon-button {
@@ -380,6 +523,19 @@ header .mdc-icon-button:focus, header .mdc-icon-button:active {
   z-index: -1;
 }
 
+/* TODO: Use CSS variables for these buttons. */
+
+body[theme="light"] #sidebar .icon,
+body[theme="light"] #sidebar .mdc-icon-button {
+  color: #000;
+  opacity: .54;
+}
+
+body[theme="light"] #sidebar .mdc-icon-button:focus {
+  opacity: .87;
+}
+
+
 #toggle-sidebar {
   margin: 0 5px;
 }
@@ -387,11 +543,15 @@ header .mdc-icon-button:focus, header .mdc-icon-button:active {
 .search-container {
   -webkit-app-region: no-drag;
   display: flex;
-  border: 1px solid rgb(232, 234, 237);
+  border: 1px solid var(--ta-search-border-color);
   border-radius: 100px;
-  background: white;
+  background: var(--ta-background-color);
   height: 30px;
   line-height: 30px;
+}
+
+.search-container.disabled {
+  opacity: var(--disabled-opacity);
 }
 
 #search-input-container {
@@ -402,6 +562,7 @@ header .mdc-icon-button:focus, header .mdc-icon-button:active {
 #search-input {
   background-color: transparent;
   border: none;
+  color: var(--ta-ui-text-color);
   flex-grow: 1;
   font-size: 14px;
   padding-left: 16px;
@@ -427,20 +588,21 @@ header.search-active #search-counting {
 
 .search-navigation-button {
   border: 0;
+  display: none;
   height: inherit;
   overflow: hidden;
   padding: 0;
-  transition: width 200ms ease-in-out;
   width: 0;
 }
 
-header.search-active .search-navigation-button {
-  border-left: 1px solid #DDD;
+header.search-active .search-navigation-button.has-results {
+  border-left: 1px solid var(--ta-search-button-divider-color);
+  display: block;
   width: 30px;
 }
 
 #title-filename {
-  color: #777;
+  color: var(--ta-filename-text-color);
   display: flex;
   flex: 1;
   font-size: 15px;
@@ -453,6 +615,14 @@ header.search-active .search-navigation-button {
 
 #title-filename.unsaved:after {
   content: " *";
+}
+
+#open-shortcuts {
+  justify-content: space-between;
+}
+
+#open-shortcuts .icon {
+  font-size: 20px;
 }
 
 #window-minimize {
@@ -592,10 +762,13 @@ input[type=search]:focus {
   display: -webkit-box;
 }
 
+/* Currently this dialog is always light, unclear if this was intentional. */
+
 .dialog-window {
-  background-color: var(--light-background-color);
+  background-color: white;
   border: 1px solid rgba(0,0,0,0.15);
   box-shadow: rgba(0,0,0,0.13) 0px 4px 30px;
+  color: black;
   max-width: 50%;
   opacity: 1.0;
   padding: 24px;
@@ -635,23 +808,16 @@ input[type=search]:focus {
   color: #000;
 }
 
-#editor .CodeMirror {
-  position: absolute !important;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  right: 0;
-}
-
-.CodeMirror-gutters {
-  background-color: var(--light-background-color);
+#editor .cm-editor {
+  height: 100%;
+  outline: none;
 }
 
 .CodeMirror-lines {
   line-height: var(--editor-line-height);
 }
 
-header.search-active ~ #editor div.CodeMirror .cm-matchhighlight {
+header.search-active ~ #editor div.cm-editor .cm-searchMatch {
   background-color: rgba(253, 207, 76, .5);
 }
 

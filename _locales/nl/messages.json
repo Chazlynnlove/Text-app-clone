@@ -23,6 +23,10 @@
     "message": "Instellingen",
     "description": "The text of the Menu 'Settings'."
   },
+  "menuShortcuts": {
+    "message": "Sneltoetsen",
+    "description": "The text on a button that takes the user to a Help center article showing all the Keyboard shortcuts for the app."
+  },
   "fontsizeSetting": {
     "message": "Lettergrootte",
     "description": "The text of the settings 'Font size'."
@@ -55,21 +59,13 @@
     "message": "Thema's",
     "description": "The text of the theme setting."
   },
-  "analyticsSetting": {
-    "message": "Statistieken verzenden",
-    "description": "The label for the checkbox in settings tab that turns on Analytics."
-  },
-  "analyticsTooltip": {
-    "message": "Automatisch gebruiksstatistieken verzenden",
-    "description": "The tooltip for send statistics checkbox."
-  },
   "alwaysOnTopSetting": {
     "message": "Altijd op voorgrond",
     "description": "The label for the checkbox in settings tab that sets the window always on top."
   },
-  "defaultThemeOption": {
-    "message": "Standaard",
-    "description": "The text of the default Option Theme."
+  "deviceThemeOption": {
+    "message": "Apparaatthema gebruiken",
+    "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
   },
   "lightThemeOption": {
     "message": "Licht",
@@ -78,6 +74,10 @@
   "darkThemeOption": {
     "message": "Donker",
     "description": "The text of the dark Option Theme."
+  },
+  "helpSection": {
+    "message": "Help",
+    "description": "Title for a section with useful links to help articles."
   },
   "closeSettings": {
     "message": "Terug",

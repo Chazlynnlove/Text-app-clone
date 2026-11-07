@@ -23,6 +23,10 @@
     "message": "설정",
     "description": "The text of the Menu 'Settings'."
   },
+  "menuShortcuts": {
+    "message": "단축키",
+    "description": "The text on a button that takes the user to a Help center article showing all the Keyboard shortcuts for the app."
+  },
   "fontsizeSetting": {
     "message": "글꼴 크기",
     "description": "The text of the settings 'Font size'."
@@ -55,21 +59,13 @@
     "message": "테마",
     "description": "The text of the theme setting."
   },
-  "analyticsSetting": {
-    "message": "통계 보내기",
-    "description": "The label for the checkbox in settings tab that turns on Analytics."
-  },
-  "analyticsTooltip": {
-    "message": "사용 통계 자동 보내기",
-    "description": "The tooltip for send statistics checkbox."
-  },
   "alwaysOnTopSetting": {
     "message": "항상 맨 위에 표시",
     "description": "The label for the checkbox in settings tab that sets the window always on top."
   },
-  "defaultThemeOption": {
-    "message": "기본 테마",
-    "description": "The text of the default Option Theme."
+  "deviceThemeOption": {
+    "message": "기기 테마 사용",
+    "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
   },
   "lightThemeOption": {
     "message": "밝게",
@@ -78,6 +74,10 @@
   "darkThemeOption": {
     "message": "어둡게",
     "description": "The text of the dark Option Theme."
+  },
+  "helpSection": {
+    "message": "도움말",
+    "description": "Title for a section with useful links to help articles."
   },
   "closeSettings": {
     "message": "뒤로",

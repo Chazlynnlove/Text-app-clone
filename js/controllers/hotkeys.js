@@ -1,15 +1,16 @@
 /**
  * @constructor
  */
-function HotkeysController(windowController, tabs, editor, settings, analytics) {
+function HotkeysController(windowController, tabs, editor, settings,
+    settingsController) {
   this.windowController_ = windowController;
   this.tabs_ = tabs;
   this.editor_ = editor;
   this.settings_ = settings;
-  this.analytics_ = analytics;
+  this.settingsController_ = settingsController;
 
-  this.ZOOM_IN_FACTOR = 9/8;
-  this.ZOOM_OUT_FACTOR = 8/9;
+  this.ZOOM_IN_FACTOR = 9 / 8;
+  this.ZOOM_OUT_FACTOR = 8 / 9;
 
   $(document).keydown(this.onKeydown_.bind(this));
 };
@@ -39,17 +40,27 @@ HotkeysController.prototype.onKeydown_ = function(e) {
         }
         return false;
 
+      case 'e':
+      case 'E':
+        // Focus the first button in the sidebar. This includes opening
+        // the sidebar and closing settings if needed.
+        this.windowController_.openSidebar();
+        this.settingsController_.closeSettings();
+        document.querySelector('.sidebar-button').focus();
+        return false;
+
       case 'f':
       case 'F':
         document.getElementById('search-input').focus();
         return false;
 
       case 'n':
-        this.tabs_.newTab();
-        return false;
-
       case 'N':
-        this.tabs_.newWindow();
+        if (e.shiftKey) {
+          this.tabs_.newWindow();
+        } else {
+          this.tabs_.newTab();
+        }
         return false;
 
       case 'o':
@@ -59,28 +70,26 @@ HotkeysController.prototype.onKeydown_ = function(e) {
 
       case 'p':
       case 'P':
-        this.analytics_.reportEvent('action', 'print');
         window.print();
         return false;
 
       case 's':
-        this.tabs_.save();
-        return false;
-
       case 'S':
-        this.tabs_.saveAs();
+        if (e.shiftKey) {
+          this.tabs_.saveAs();
+        }
+        else {
+          this.tabs_.save();
+        }
         return false;
 
       case 'w':
-        this.tabs_.closeCurrent();
-        return false;
-
       case 'W':
-        this.windowController_.close();
-        return false;
-
-      case 'Z':
-        this.editor_.redo();
+        if (e.shiftKey) {
+          this.windowController_.close();
+        } else {
+          this.tabs_.closeCurrent();
+        }
         return false;
 
       case '0':

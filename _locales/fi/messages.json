@@ -23,6 +23,10 @@
     "message": "Asetukset",
     "description": "The text of the Menu 'Settings'."
   },
+  "menuShortcuts": {
+    "message": "Pikanäppäimet",
+    "description": "The text on a button that takes the user to a Help center article showing all the Keyboard shortcuts for the app."
+  },
   "fontsizeSetting": {
     "message": "Kirjasinkoko",
     "description": "The text of the settings 'Font size'."
@@ -55,21 +59,13 @@
     "message": "Teemat",
     "description": "The text of the theme setting."
   },
-  "analyticsSetting": {
-    "message": "Lähetä tilastoja",
-    "description": "The label for the checkbox in settings tab that turns on Analytics."
-  },
-  "analyticsTooltip": {
-    "message": "Lähetä käyttötilastot automaattisesti",
-    "description": "The tooltip for send statistics checkbox."
-  },
   "alwaysOnTopSetting": {
     "message": "Aina päällimmäisenä",
     "description": "The label for the checkbox in settings tab that sets the window always on top."
   },
-  "defaultThemeOption": {
-    "message": "Oletus",
-    "description": "The text of the default Option Theme."
+  "deviceThemeOption": {
+    "message": "Käytä laitteen teemaa",
+    "description": "The label on a radio button that lets the user configure the app to use their device's color theme. This changes the appearance of the app."
   },
   "lightThemeOption": {
     "message": "Vaalea",
@@ -78,6 +74,10 @@
   "darkThemeOption": {
     "message": "Tumma",
     "description": "The text of the dark Option Theme."
+  },
+  "helpSection": {
+    "message": "Ohje",
+    "description": "Title for a section with useful links to help articles."
   },
   "closeSettings": {
     "message": "Takaisin",

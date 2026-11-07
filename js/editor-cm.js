@@ -16,85 +16,79 @@ var EditSession = CodeMirror.Doc;
 // fake <textarea> that only contains the users input.
 CodeMirror.inputStyles.devToolsAccessibleTextArea = class extends CodeMirror.inputStyles.textarea {
   /**
-   * @override
-   * @param {!Object} display
+   * @type {window.CodeMirror.state.Compartment} for changing the language
+   * dynamically to match the file extension.
    */
-  init(display) {
-    super.init(display);
-    this.textarea.addEventListener('compositionstart', this._onCompositionStart.bind(this));
-  }
-
-  _onCompositionStart() {
-    if (this.textarea.selectionEnd === this.textarea.value.length)
-      return;
-    // CodeMirror always expects the caret to be at the end of the textarea
-    // When in IME composition mode, clip the textarea to how CodeMirror expects it,
-    // and then let CodeMirror do it's thing.
-    this.textarea.value = this.textarea.value.substring(0, this.textarea.selectionEnd);
-    this.textarea.setSelectionRange(this.textarea.value.length, this.textarea.value.length);
-    this.prevInput = this.textarea.value;
-  }
+  this.langCompartment_ = new CodeMirror.state.Compartment();
 
   /**
-   * @override
-   * @param {boolean=} typing
+   * @type {window.CodeMirror.state.Compartment} for changing the "Wrap lines"
+   * setting dynamically.
    */
-  reset(typing) {
-    if (typing || this.contextMenuPending || this.composing || this.cm.somethingSelected()) {
-      super.reset(typing);
-      return;
-    }
-
-    // When navigating around the document, keep the current visual line in the textarea.
-    const cursor = this.cm.getCursor();
-    let start, end;
-    if (this.cm.options.lineWrapping) {
-      // To get the visual line, compute the leftmost and rightmost character positions.
-      const top = this.cm.charCoords(cursor, 'page').top;
-      start = this.cm.coordsChar({left: -Infinity, top});
-      end = this.cm.coordsChar({left: Infinity, top});
-    } else {
-      // Limit the line to 1000 characters to prevent lag.
-      const offset = Math.floor(cursor.ch / 1000) * 1000;
-      start = {ch: offset, line: cursor.line};
-      end = {ch: offset + 1000, line: cursor.line};
-    }
-    this.textarea.value = this.cm.getRange(start, end);
-    const caretPosition = cursor.ch - start.ch;
-    this.textarea.setSelectionRange(caretPosition, caretPosition);
-    this.prevInput = this.textarea.value;
-  }
+  this.lineWrappingCompartment_ = new CodeMirror.state.Compartment();
 
   /**
-   * @override
-   * @return {boolean}
+   * @type {window.CodeMirror.state.Compartment} for changing the "show line numbers"
+   * setting dynamically.
    */
-  poll() {
-    if (this.contextMenuPending || this.composing)
-      return super.poll();
-    const text = this.textarea.value;
-    let start = 0;
-    const length = Math.min(this.prevInput.length, text.length);
-    while (start < length && this.prevInput[start] === text[start])
-      ++start;
-    let end = 0;
-    while (end < length - start && this.prevInput[this.prevInput.length - end - 1] === text[text.length - end - 1])
-      ++end;
+  this.lineNumbersCompartment_ = new CodeMirror.state.Compartment();
 
-    // CodeMirror expects the user to be typing into a blank <textarea>.
-    // Pass a fake textarea into super.poll that only contains the users input.
-    /** @type {!HTMLTextAreaElement} */
-    const placeholder = this.textarea;
-    this.textarea = /** @type {!HTMLTextAreaElement} */ (document.createElement('textarea'));
-    this.textarea.value = text.substring(start, text.length - end);
-    this.textarea.setSelectionRange(placeholder.selectionStart - start, placeholder.selectionEnd - start);
-    this.prevInput = '';
-    const result = super.poll();
-    this.prevInput = text;
-    this.textarea = placeholder;
-    return result;
-  }
-};
+  /** @type {window.CodeMirror.state.Compartment} for setting light/dark mode. */
+  this.themeCompartment_ = new CodeMirror.state.Compartment();
+
+  const themeStyles = {
+    "&": {
+      backgroundColor: "var(--ta-background-color)",
+      color: "var(--ta-editor-text-color)",
+    },
+    ".cm-content": {
+      fontSize: "var(--ta-editor-font-size)",
+      lineHeight: "1.2",
+    },
+    ".cm-gutter": {
+      backgroundColor: "var(--ta-background-color)",
+      color: "var(--ta-editor-line-number-text-color)",
+      fontSize: "var(--ta-editor-font-size)",
+      lineHeight: "1.2",
+    },
+    ".cm-cursor": {
+      borderLeftColor: "var(--ta-editor-text-color)",
+    },
+    ".cm-dropCursor": {
+      borderLeftColor: "var(--ta-editor-text-color)",
+    },
+    "&.cm-focused .cm-selectionBackground": {
+      backgroundColor: "var(--ta-editor-selection-focus-color) !important",
+    },
+    ".cm-selectionBackground": {
+      backgroundColor: "var(--ta-editor-selection-color) !important",
+    },
+    ".cm-matchingBracket": {
+      backgroundColor: "inherit !important",
+      color: "var(--ta-editor-text-color) !important",
+      borderBottom: "1px solid var(--ta-editor-text-color)",
+    },
+    ".cm-nonmatchingBracket": {
+      backgroundColor: "inherit !important",
+    },
+    ".cm-line": {
+      cursor: "auto",
+    }
+  };
+
+  this.lightTheme_ = CodeMirror.view.EditorView.theme(themeStyles, {dark: false});
+  this.darkTheme_ = CodeMirror.view.EditorView.theme(themeStyles, {dark: true});
+
+  /**
+   * Extensions don't need to be loaded here because we will always load a
+   * state created by newState with setSession.
+   * 
+   * @type {window.CodeMirror.view.EditorView}
+   */
+  this.editorView_ = new CodeMirror.view.EditorView({
+    doc: "",
+    parent: editorElement,
+  })
 
 /**
  * @constructor
@@ -136,33 +130,31 @@ function EditorCodeMirror(editorElement, settings) {
 
 EditorCodeMirror.EXTENSION_TO_MODE = {
     'bash': 'shell',
-    'coffee': 'coffeescript',
-    'c': 'clike',
-    'c++': 'clike',
-    'cc': 'clike',
-    'cs': 'clike',
+    'coffee': 'coffeeScript',
+    'c': 'cpp',
+    'c++': 'cpp',
+    'cc': 'cpp',
+    'cs': 'cpp',
     'css': 'css',
-    'cpp': 'clike',
-    'cxx': 'clike',
+    'cpp': 'cpp',
+    'cxx': 'cpp',
     'diff': 'diff',
     'gemspec': 'ruby',
     'go': 'go',
-    'h': 'clike',
-    'hh': 'clike',
-    'hpp': 'clike',
-    'htm': 'htmlmixed',
-    'html': 'htmlmixed',
-    'java': 'clike',
+    'h': 'cpp',
+    'hh': 'cpp',
+    'hpp': 'cpp',
+    'htm': 'html',
+    'html': 'html',
+    'java': 'java',
     'js': 'javascript',
-    'json': 'yaml',
+    'json': 'json',
     'latex': 'stex',
-    'less': 'text/x-less',
+    'less': 'less',
     'ltx': 'stex',
     'lua': 'lua',
     'markdown': 'markdown',
     'md': 'markdown',
-    'ml': 'ocaml',
-    'mli': 'ocaml',
     'patch': 'diff',
     'pgsql': 'sql',
     'pl': 'perl',
@@ -179,14 +171,16 @@ EditorCodeMirror.EXTENSION_TO_MODE = {
     'sql': 'sql',
     'svg': 'xml',
     'tex': 'stex',
-    'xhtml': 'htmlmixed',
+    'xhtml': 'html',
     'xml': 'xml',
-    'xq': 'xquery',
     'yaml': 'yaml'};
 
 /**
  * @param {SessionDescriptor} session
  * Change the current session, usually to switch to another tab.
+ *
+ * @param {EditorState} editorState
+ * @param {string} fileExtension
  */
 EditorCodeMirror.prototype.setSession = function(session) {
   this.cm_.swapDoc(session.codemirror);
@@ -217,7 +211,7 @@ EditorCodeMirror.prototype.redo = function() {
 };
 
 EditorCodeMirror.prototype.focus = function() {
-  this.cm_.focus();
+  this.editorView_.focus();
 };
 
 /**
@@ -228,96 +222,129 @@ EditorCodeMirror.prototype.setMode = function(session, extension) {
   session = session.codemirror;
   var mode = EditorCodeMirror.EXTENSION_TO_MODE[extension];
   if (mode) {
-    var currentSession = null;
-    if (session !== this.cm_.getDoc()) {
-      currentSession = this.cm_.swapDoc(session);
-    }
-    this.cm_.setOption('mode', mode);
-    if (currentSession !== null) {
-      this.cm_.swapDoc(currentSession);
+    const lang = window.CodeMirror.lang[mode];
+
+    if (typeof lang === "object") {
+      // Legacy parser
+      extension = window.CodeMirror.language.StreamLanguage.define(lang);
+    } else if (typeof lang === "function") {
+      extension = lang();
     }
   }
+
+  if (extension !== undefined) {
+    this.editorView_.dispatch({
+      effects: this.langCompartment_.reconfigure(extension)
+    });
+  } else {
+    // Reset the language if no mode found.
+    this.editorView_.dispatch({
+      effects: this.langCompartment_.reconfigure([])
+    });
+  }
 };
+
+/** Apply all settings to the current state. */
+EditorCodeMirror.prototype.applyAllSettings = function() {
+  this.setTheme(this.settings_.get('theme'));
+  this.setFontSize(this.settings_.get('fontsize'));
+  this.showHideLineNumbers(this.settings_.get('linenumbers'));
+  this.setReplaceTabWithSpaces(this.settings_.get('spacestab'));
+  this.setTabSize(this.settings_.get('tabsize'));
+  this.setWrapLines(this.settings_.get('wraplines'));
+}
 
 /**
  * @param {number} fontSize
  * Update font size from settings.
  */
 EditorCodeMirror.prototype.setFontSize = function(fontSize) {
-  $('.CodeMirror').css('font-size',fontSize + 'px');
-  this.cm_.refresh();
+  // The "proper" way to do this might be to create a new theme, but this is
+  // easier. Force a redraw so line numbers get positioned correctly.
+  this.element_.style.setProperty('--ta-editor-font-size', fontSize + 'px');
+  this.editorView_.setState(this.editorView_.state);
 };
 
 /**
  * @param {number} size
  */
-EditorCodeMirror.prototype.setTabSize = function(size) {
-  this.cm_.setOption('tabSize', size);
-  this.cm_.setOption('indentUnit', size);
-  this.replaceTabWithSpaces(this.settings_.get('spacestab'));
+EditorCodeMirror.prototype.setTabSize = function(size) {  
+  const useSpace = this.settings_.get('spacestab');
+  this.editorView_.dispatch({
+    effects: [
+      this.tabSizeCompartment_.reconfigure(window.CodeMirror.state.EditorState.tabSize.of(size)),
+      this.getIndentUnitStateEffect(useSpace, size),
+    ]
+  });
 };
 
 /**
- * @param {string} theme
+ * Creates a StateEffect that can be used to change the indent unit.
+ * 
+ * @param {boolean} useSpace If true the indent unit will be spaces. Otherwise it a tab character.
+ * @param {number} tabSize Number of spaces equal to the size of a tab.
+ */
+EditorCodeMirror.prototype.getIndentUnitStateEffect = function(useSpace, tabSize) {
+  const indentUnit = useSpace ? ' '.repeat(tabSize) : '\t';
+  return this.indentUnitCompartment_.reconfigure(window.CodeMirror.language.indentUnit.of(indentUnit));
+};
+
+/**
+ * @param {string} theme The color theme to change to. Default light.
  */
 EditorCodeMirror.prototype.setTheme = function(theme) {
-  this.cm_.setOption('theme', theme || 'default');
+  this.editorView_.dispatch({
+    effects: this.themeCompartment_.reconfigure(theme === "dark" ? this.darkTheme_ : this.lightTheme_),
+  });
 };
 
 /**
- * @param {boolean} val
+ * @param {boolean} val Whether or not to show line numbers.
  */
 EditorCodeMirror.prototype.showHideLineNumbers = function(val) {
-  this.cm_.setOption('lineNumbers', val);
+  this.editorView_.dispatch({
+    effects: this.lineNumbersCompartment_.reconfigure(val ? window.CodeMirror.view.lineNumbers() : [])
+  });
 };
 
 /**
- * @param {boolean} val
+ * @param {boolean} val Whether or not to enable line wrapping.
  */
 EditorCodeMirror.prototype.setWrapLines = function(val) {
-  this.cm_.setOption('lineWrapping', val);
+  this.editorView_.dispatch({
+    effects: this.lineWrappingCompartment_.reconfigure(val ? window.CodeMirror.view.EditorView.lineWrapping : [])
+  });
 };
 
 /**
- * @param {boolean} val
+ * @param {boolean} useSpace Whether or not to indent with spaces. False means indent with tabs.
  */
-EditorCodeMirror.prototype.setSmartIndent = function(val) {
-  this.cm_.setOption('smartIndent', val);
+EditorCodeMirror.prototype.setReplaceTabWithSpaces = function(useSpace) {
+  const tabsize = this.settings_.get('tabsize');
+  this.editorView_.dispatch({
+    effects: [this.getIndentUnitStateEffect(useSpace, tabsize)],
+  });
 };
 
 /**
- * @param {boolean} val
+ * @param {window.CodeMirror.view.ViewUpdate} update
  */
-EditorCodeMirror.prototype.replaceTabWithSpaces = function(val) {
-  this.cm_.setOption('indentWithTabs', !val);
-  if (val) {
-    // Need to update this closure once the tabsize has changed. So, have to
-    // call this method when it happens.
-    var tabsize = this.settings_.get('tabsize');
-    CodeMirror.commands.defaultTab = function(cm) {
-      if (cm.somethingSelected()) {
-        cm.indentSelection("add");
-      } else {
-        var nspaces = tabsize - cm.getCursor().ch % tabsize;
-        var spaces = Array(nspaces + 1).join(" ");
-        cm.replaceSelection(spaces, "end", "+input");
-      }
-    };
-  } else {
-    CodeMirror.commands.defaultTab = this.defaultTabHandler_;
+EditorCodeMirror.prototype.onViewUpdate = function(update) {
+  if (update.docChanged) {
+    $.event.trigger('docchange');
   }
 };
 
-/**
- * Make the textarea unfocusable and hide cursor.
- */
 EditorCodeMirror.prototype.disable = function() {
-  this.cm_.setOption('readOnly', 'nocursor');
+  this.editorView_.dispatch({
+    effects: this.editableCompartment_.reconfigure(window.CodeMirror.view.EditorView.editable.of(false))
+  });
 };
 
 EditorCodeMirror.prototype.enable = function() {
-  this.cm_.setOption('readOnly', false);
-  this.cm_.focus();
+  this.editorView_.dispatch({
+    effects: this.editableCompartment_.reconfigure(window.CodeMirror.view.EditorView.editable.of(true))
+  });
 };
 
 /**

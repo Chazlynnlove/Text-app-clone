@@ -2,6 +2,7 @@
  * @constructor
  */
 function TextApp() {
+  /** @type {EditorCodeMirror} */
   this.editor_ = null;
   this.settings_ = null;
   this.tabs_ = null;
@@ -64,6 +65,7 @@ TextApp.prototype.getFilesToRetain = function() {
 
 TextApp.prototype.setTheme = function() {
   var theme = this.settings_.get('theme');
+
   this.windowController_.setTheme(theme);
   this.editor_.setTheme(theme);
 };
@@ -169,12 +171,8 @@ TextApp.prototype.onSettingsChanged_ = function(e, key, value) {
       this.editor_.showHideLineNumbers(value);
       break;
 
-    case 'smartindent':
-      this.editor_.setSmartIndent(value);
-      break;
-
     case 'spacestab':
-      this.editor_.replaceTabWithSpaces(this.settings_.get('spacestab'));
+      this.editor_.setReplaceTabWithSpaces(this.settings_.get('spacestab'));
       break;
 
     case 'tabsize':
