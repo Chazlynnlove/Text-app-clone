@@ -1,12 +1,23 @@
 # Text Chrome App
 
-Just a text editor for Chrome OS and Chrome. To install visit the [Chrome Web Store page](https://chrome.google.com/webstore/detail/mmfbcljfglbokpmkimbfghdkjmjhdgbg).
+Just a text editor for Chrome OS and Chrome. Install via the Chrome Web Store: [stable version](https://chrome.google.com/webstore/detail/mmfbcljfglbokpmkimbfghdkjmjhdgbg) or [canary version](https://chrome.google.com/webstore/detail/text-canary/fojlbpdodmdfcdeigmknnaeikaadaaoh).
 
 ## Getting the code
 
 You can download the whole source code [as one archive](https://github.com/GoogleChromeLabs/text-app/archive/master.zip), or get it from the repository using git:
 
     git clone --recursive git://github.com/GoogleChromeLabs/text-app.git
+
+## Prebuild CodeMirror
+
+Do this before running the development version or building the package. You'll need Node.js.
+```
+cd third_party/codemirror.next
+npm install
+npm run rebuild
+```
+
+If you make changes to `bundle.ts` or the dependencies in `package.json` in `third_party/codemirror.next/`, you must rebuild CodeMirror: `npm run rebuild`.
 
 ## Running the development version
 
@@ -21,4 +32,4 @@ Building script requires Python3 and will use online Closure Compiler. Just run
 
     python3 build.py
 
-and the package will be written to `text-app/build/` directory in zipped and unzipped formats.
+and the package will be written to `text-app/build/` directory in zipped and unzipped formats (canary version). To build the stable version run the build script with the flag -s.

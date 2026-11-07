@@ -1,13 +1,17 @@
 /**
  * @constructor
  * @param {number} id
- * @param {EditSession} session Edit session.
+ * @param {window.CodeMirror.state.EditorState} session Edit session.
+ * @param {string} lineEndings What character(s) to use as the line ending.
  * @param {FileEntry} entry
  */
 function Tab(id, session, lineEndings, entry, dialogController) {
   this.id_ = id;
+  /** @type {window.CodeMirror.state.EditorState} */
   this.session_ = session;
+  /** @type {string} Separator between lines. */
   this.lineEndings_ = lineEndings;
+  /** @type {FileEntry} */
   this.entry_ = entry;
   this.saved_ = true;
   this.path_ = null;
@@ -24,6 +28,7 @@ Tab.prototype.getName = function() {
   if (this.entry_) {
     return this.entry_.name;
   } else {
+    // TODO: i18n 'Untitled' text
     return 'Untitled ' + this.id_;
   }
 };
@@ -40,6 +45,10 @@ Tab.prototype.getExtension = function() {
 
 Tab.prototype.getSession = function() {
   return this.session_;
+};
+
+Tab.prototype.setSession = function(session) {
+  return this.session_ = session;
 };
 
 /**
@@ -68,20 +77,21 @@ Tab.prototype.updatePath_ = function() {
   }.bind(this));
 };
 
+/** Get the contents of the file in the tab. */
 Tab.prototype.getContent_ = function() {
-  return this.session_.getValue(this.lineEndings_);
+  return this.session_.codemirror.getValue(this.lineEndings_);
 };
 
 Tab.prototype.save = function(opt_callbackDone) {
   util.writeFile(
-      this.entry_, this.getContent_(),
-      function() {
-        this.saved_ = true;
-        $.event.trigger('tabsave', this);
-        if (opt_callbackDone)
-          opt_callbackDone();
-      }.bind(this),
-      this.reportWriteError_.bind(this));
+    this.entry_, this.getContent_(),
+    function() {
+      this.saved_ = true;
+      $.event.trigger('tabsave', this);
+      if (opt_callbackDone)
+        opt_callbackDone();
+    }.bind(this),
+    this.reportWriteError_.bind(this));
 };
 
 Tab.prototype.reportWriteError_ = function(e) {
@@ -108,14 +118,23 @@ Tab.prototype.changed = function() {
 
 /**
  * @constructor
+ * @param {EditorCodeMirror} editor
  */
 function Tabs(editor, dialogController, settings) {
+  /** @type {EditorCodeMirror} */
   this.editor_ = editor;
   this.dialogController_ = dialogController;
   this.settings_ = settings;
+  /** @type {Tab[]} */
   this.tabs_ = [];
+  /** @type {Tab|null} Current selected tab, or initially null. */
   this.currentTab_ = null;
+
   $(document).bind('docchange', this.onDocChanged_.bind(this));
+}
+
+Tabs.prototype.updateEditor = function(editor) {
+  this.editor_ = editor;
 }
 
 /**
@@ -184,13 +203,18 @@ Tabs.prototype.newWindow = function() {
   }.bind(this));
 };
 
+/**
+ * Add a new tab.
+ *
+ * @param {?string} opt_content What text content the tab should contain. Otherwise it starts empty.
+ */
 Tabs.prototype.newTab = function(opt_content, opt_entry) {
   var id = 1;
   while (this.getTabById(id)) {
     id++;
   }
 
-  var session = this.editor_.newSession(opt_content);
+  var session = util.createUnifiedSession(opt_content);
   var lineEndings = util.guessLineEndings(opt_content);
 
   var tab = new Tab(id, session, lineEndings, opt_entry || null,
@@ -198,9 +222,6 @@ Tabs.prototype.newTab = function(opt_content, opt_entry) {
   this.tabs_.push(tab);
   $.event.trigger('newtab', tab);
   this.showTab(tab.getId());
-  var fileNameExtension = tab.getExtension();
-  if (fileNameExtension)
-    this.editor_.setMode(session, fileNameExtension);
 };
 
 /**
@@ -240,8 +261,17 @@ Tabs.prototype.nextTab = function() {
 };
 
 Tabs.prototype.showTab = function(tabId) {
+  if (this.currentTab_) {
+    // Before switching tabs, write the editorView's state to the tab.
+    this.updateCurrentTabState_();
+  }
+
   var tab = this.getTabById(tabId)
-  this.editor_.setSession(tab.getSession());
+  if (!tab) {
+    console.error('Can\'t find tab', tabId);
+    return;
+  }
+  this.editor_.setSession(tab.getSession(), tab.getExtension());
   this.currentTab_ = tab;
   $.event.trigger('switchtab', tab);
   this.editor_.focus();
@@ -295,6 +325,15 @@ Tabs.prototype.closeTab_ = function(tab) {
   this.tabs_.splice(i, 1);
   $.event.trigger('tabclosed', tab);
 };
+
+/**
+ * This is needed because EditorState is immutable. So if you open a tab and
+ * edit the contents, the EditorView's state won't match the tab's session state.
+ */
+Tabs.prototype.updateCurrentTabState_ = function() {
+  if (!this.currentTab_) return;
+  this.currentTab_.setSession(this.editor_.editorView_.state);
+}
 
 Tabs.prototype.closeCurrent = function() {
   this.close(this.currentTab_.getId());
@@ -360,11 +399,17 @@ Tabs.prototype.promptSave_ = function(tab, callbackShowDialog) {
 
 /**
  * Save opt_tab, or the current tab if no opt_tab is passed.
- * @param {?Tab=} opt_tab
+ * @param {?Tab=} opt_tab Optional tab to save.
  * @param {function()=} opt_callback
  */
 Tabs.prototype.save = function(opt_tab, opt_callback) {
   var tab = opt_tab || this.currentTab_;
+
+  // Update the tab's editorState if it's the current tab.
+  if (tab && tab === this.currentTab_) {
+    this.updateCurrentTabState_();
+  }
+
   if (tab.getEntry()) {
     tab.save(opt_callback);
   } else {
@@ -379,9 +424,14 @@ Tabs.prototype.save = function(opt_tab, opt_callback) {
  */
 Tabs.prototype.saveAs = function(opt_tab, opt_callback) {
   var tab = opt_tab || this.currentTab_;
+  if (tab && tab === this.currentTab_) {
+    this.updateCurrentTabState_();
+  }
+
   var suggestedName = tab.getEntry() && tab.getEntry().name ||
-                      util.sanitizeFileName(tab.session_.getLine(0)) ||
+                      util.sanitizeFileName(tab.session_.codemirror.getLine(0)) ||
                       tab.getName();
+
   if (!util.getExtension(suggestedName)) {
       suggestedName += '.txt';
   }
@@ -423,10 +473,18 @@ Tabs.prototype.openFileEntry = function(entry) {
   }.bind(this));
 };
 
+/**
+ * Sets the mode for a tab depending on its extension.
+ *
+ * @param {Tab} tab The tab corresponding to the file to be saved.
+ */
 Tabs.prototype.modeAutoSet = function(tab) {
+  // Only set the mode if it's the current tab. The mode for non-current tabs
+  // will update when they become the current tab.
+  if (tab !== this.currentTab_) return;
   var extension = tab.getExtension();
   if (extension) {
-    this.editor_.setMode(tab.getSession(), extension);
+    this.editor_.updateMode(extension);
   }
 };
 
@@ -460,12 +518,28 @@ Tabs.prototype.saveEntry_ = function(tab, entry, opt_callback) {
   this.save(tab, opt_callback);
 };
 
-Tabs.prototype.onDocChanged_ = function(e, session) {
+/**
+ * @param {Event} event The DocChange event object.
+ * @param {Object} eventData The data passed with the DocChange event. This
+ *   object contains where the event came from, i.e textarea or codemirror, which
+ *   helps the syncUnifiedSession function determine which of the editors is the
+ *   source of truth. It also contains the current session of the editor so this
+ *   function can check to make sure Tabs state is still accurate.
+ * The event handler which is called when a DocChange event is caught, this
+ * handler registers the change and then syncs the codemirror and textarea
+ * instances so they both contain the same text.
+ */
+Tabs.prototype.onDocChanged_ = function(event, eventData) {
+  // Assume that updates are coming from the current tab, if they arn't
+  // we have no real way to recover so failing here is acceptable.
   var tab = this.currentTab_;
+  tab.changed();
+  const session = eventData.session;
   if (this.currentTab_.getSession() !== session) {
+    // Tabs state may be corrupted, log a warning.
     console.warn('Something wrong. Current session should be',
-                 this.currentTab_.getSession(),
-                 ', but this session was changed:', session);
+        this.currentTab_.getSession(),
+        ', but this session was changed:', session);
     for (var i = 0; i < this.tabs_; i++) {
       if (this.tabs_[i].getSession() === session) {
         tab = this.tabs_[i];
@@ -478,6 +552,14 @@ Tabs.prototype.onDocChanged_ = function(e, session) {
       return;
     }
   }
+  // Sync the session.
+  util.syncUnifiedSession(this.currentTab_.getSession(), eventData.type, this.lineEndings_);
+};
 
-  tab.changed();
+/**
+ * Determines whether any tabs are open.
+ * @return {boolean} True if at least one tab is open.
+ */
+Tabs.prototype.hasOpenTab = function() {
+  return !!this.tabs_.length;
 };

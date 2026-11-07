@@ -1,43 +1,38 @@
 /**
  * @constructor
  */
-function HotkeysController(windowController, tabs, editor, settings, analytics) {
+function HotkeysController(windowController, tabs, editor, settings,
+    settingsController) {
   this.windowController_ = windowController;
   this.tabs_ = tabs;
   this.editor_ = editor;
   this.settings_ = settings;
-  this.analytics_ = analytics;
+  this.settingsController_ = settingsController;
 
-  this.KEY = {};
-  // create key map A - Z
-  for (var i = 65; i <= 90; i++) {
-    this.KEY[String.fromCharCode(i).toUpperCase()] = i;
-  }
-
-  this.KEY.TAB = 9;
-  this.KEY.SPACE = 32;
-  this.KEY.ZERO = 48;
-  this.KEY.NUMPAD_ZERO = 96;
-  this.KEY.NUMPAD_PLUS = 107;
-  this.KEY.NUMPAD_MINUS = 109;
-  this.KEY.PLUS = 187;
-  this.KEY.MINUS = 189;
-
-  this.ZOOM_IN_FACTOR = 9/8;
-  this.ZOOM_OUT_FACTOR = 8/9;
+  this.ZOOM_IN_FACTOR = 9 / 8;
+  this.ZOOM_OUT_FACTOR = 8 / 9;
 
   $(document).keydown(this.onKeydown_.bind(this));
-  document.addEventListener('mousewheel', this.onMouseWheel_.bind(this));
 };
 
 /**
+ * Update the editor.
+ */
+HotkeysController.prototype.updateEditor = function(editor) {
+  this.editor_ = editor;
+}
+
+/**
+ * Handles hotkey combination if present in keydown event.
  * Some hotkeys are handled by CodeMirror directly. Among them:
  * Ctrl-C, Ctrl-V, Ctrl-X, Ctrl-Z, Ctrl-Y, Ctrl-A
+ * @param {!Event} e The keydown event
+ * @private
  */
 HotkeysController.prototype.onKeydown_ = function(e) {
   if (e.ctrlKey || e.metaKey) {
-    switch (e.keyCode) {
-      case this.KEY.TAB:  // Tab
+    switch (e.key) {
+      case 'Tab':
         if (e.shiftKey) {
           this.tabs_.previousTab();
         } else {
@@ -45,11 +40,22 @@ HotkeysController.prototype.onKeydown_ = function(e) {
         }
         return false;
 
-      case this.KEY.F:
-        $('#search-button').click();
+      case 'e':
+      case 'E':
+        // Focus the first button in the sidebar. This includes opening
+        // the sidebar and closing settings if needed.
+        this.windowController_.openSidebar();
+        this.settingsController_.closeSettings();
+        document.querySelector('.sidebar-button').focus();
         return false;
 
-      case this.KEY.N:
+      case 'f':
+      case 'F':
+        document.getElementById('search-input').focus();
+        return false;
+
+      case 'n':
+      case 'N':
         if (e.shiftKey) {
           this.tabs_.newWindow();
         } else {
@@ -57,24 +63,28 @@ HotkeysController.prototype.onKeydown_ = function(e) {
         }
         return false;
 
-      case this.KEY.O:
+      case 'o':
+      case 'O':
         this.tabs_.openFiles();
         return false;
 
-      case this.KEY.P:
-        this.analytics_.reportEvent('action', 'print');
+      case 'p':
+      case 'P':
         window.print();
         return false;
 
-      case this.KEY.S:
+      case 's':
+      case 'S':
         if (e.shiftKey) {
           this.tabs_.saveAs();
-        } else {
+        }
+        else {
           this.tabs_.save();
         }
         return false;
 
-      case this.KEY.W:
+      case 'w':
+      case 'W':
         if (e.shiftKey) {
           this.windowController_.close();
         } else {
@@ -82,45 +92,30 @@ HotkeysController.prototype.onKeydown_ = function(e) {
         }
         return false;
 
-      case this.KEY.Z:
-        if (e.shiftKey) {
-          this.editor_.redo();
-          return false;
-        }
-        break;
-
-      case this.KEY.ZERO:
-      case this.KEY.NUMPAD_ZERO:
+      case '0':
+      case ')':
         this.settings_.reset('fontsize');
         return false;
 
-      case this.KEY.PLUS:
-      case this.KEY.NUMPAD_PLUS:
+      case '+':
+      case '=':
         var fontSize = this.settings_.get('fontsize');
         this.settings_.set('fontsize', fontSize * this.ZOOM_IN_FACTOR);
         return false;
 
-      case this.KEY.MINUS:
-      case this.KEY.NUMPAD_MINUS:
+      case '-':
+      case '_':
         var fontSize = this.settings_.get('fontsize');
         this.settings_.set('fontsize', fontSize * this.ZOOM_OUT_FACTOR);
         return false;
+
+      default:
+        break;
     }
   } else if (e.altKey) {
-    if (e.keyCode === this.KEY.SPACE) {
+    if (e.key === ' ') {
       $('#toggle-sidebar').click();
       return false;
-    }
-  }
-};
-
-HotkeysController.prototype.onMouseWheel_ = function(e) {
-  if (e.ctrlKey || e.metaKey) {
-    var fontSize = this.settings_.get('fontsize');
-    if (e.wheelDelta > 0) {
-      this.settings_.set('fontsize', fontSize * this.ZOOM_IN_FACTOR);
-    } else {
-      this.settings_.set('fontsize', fontSize * this.ZOOM_OUT_FACTOR);
     }
   }
 };

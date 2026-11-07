@@ -8,8 +8,10 @@ import subprocess
 import sys
 import urllib.parse
 import urllib.request
+import glob
 
 APP_NAME = 'Text'
+CANARY_APP_NAME = 'Text Canary'
 IS_APP = True
 
 BASE_DIR = os.path.dirname(sys.argv[0])
@@ -22,12 +24,8 @@ BUILD_DIR = os.path.join(BASE_DIR, 'build')
 # the <!-- JS --> block in index.html).
 FILES_TO_COPY = [
   'index.html',
-  '_locales/en/messages.json',
   'css/app.css',
   'css/print.css',
-  'css/theme-dark.css',
-  'css/theme-default.css',
-  'css/theme-light.css',
   'icon/16x16.png',
   'icon/32x32.png',
   'icon/48x48.png',
@@ -35,24 +33,13 @@ FILES_TO_COPY = [
   'icon/96x96.png',
   'icon/128x128.png',
   'icon/256x256.png',
-  'images/arrow-down.svg',
-  'images/arrow-up.svg',
-  'images/check_no_box.png',
-  'images/check_no_box_white.png',
-  'images/close.svg',
-  'images/close-tab.svg',
-  'images/maximize.svg',
-  'images/menu.svg',
-  'images/search.svg',
-  'images/minimize.svg',
-  'third_party/analytics/google-analytics-bundle.js',
-  'third_party/CodeMirror/lib/codemirror.css',
+  'third_party/codemirror.next/codemirror.next.bin.js',
   'third_party/jquery/jquery-1.8.3.min.js',
   'third_party/material-components-web/material-components-web.min.css',
   'third_party/material-components-web/material-components-web.min.js',
   'third_party/material-design-icons/iconfont/material-icons.css',
   'third_party/material-design-icons/iconfont/MaterialIcons-Regular.woff2'
- ]
+ ] + glob.glob('_locales/*/messages.json')
 
 MANIFEST = 'manifest.json'
 INDEX_HTML = 'index.html'
@@ -68,8 +55,6 @@ EXTERNS_URLS = [
   'https://raw.githubusercontent.com/google/closure-compiler/master/' +
       'contrib/externs/jquery-1.8.js',
   'https://raw.githubusercontent.com/google/closure-compiler/master/' +
-      'contrib/externs/google_analytics_api.js',
-  'https://raw.githubusercontent.com/google/closure-compiler/master/' +
       'contrib/externs/chrome_extensions.js',
 ]
 
@@ -81,13 +66,17 @@ COMPILATION_LEVEL = 'SIMPLE_OPTIMIZATIONS'
 BACKGROUND_COMPILATION_LEVEL = 'ADVANCED_OPTIMIZATIONS'
 
 debug_build = False
+stable_build = False
 
 
 def parse_command_line():
   global debug_build
+  global stable_build
   for option in sys.argv[1:]:
     if option == '-d':
       debug_build = True
+    elif option == '-s':
+      stable_build = True
     else:
       raise Exception('Unknown command line option: ' + option)
 
@@ -125,8 +114,10 @@ def process_manifest(out_dir, version):
   manifest = json.load(open(os.path.join(SOURCE_DIR, MANIFEST)))
   if USE_LOCALIZED_NAME:
     manifest['name'] = '__MSG_extName__'
-  else:
+  elif stable_build:
     manifest['name'] = APP_NAME
+  else:
+    manifest['name'] = CANARY_APP_NAME
   manifest['version'] = version
 
   if IS_APP:
@@ -181,7 +172,7 @@ def print_compilation_errors(errors, type, js_files, externs_file):
     elif filename.lower().find('externs') >= 0:
       filename = externs_file
     error['file'] = filename
-  if type is 'warning' and not PRINT_THIRD_PARTY_WARNINGS:
+  if type == 'warning' and not PRINT_THIRD_PARTY_WARNINGS:
     errors = [error for error in errors if 'third_party' not in error['file']]
     if not errors:
       return
@@ -265,6 +256,8 @@ def main():
   version = get_version()
 
   dir_name = APP_NAME + '-' + version
+  if not stable_build:
+    dir_name += '-canary'
   if debug_build:
     dir_name += '-dbg'
   print(dir_name)
